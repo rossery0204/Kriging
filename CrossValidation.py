@@ -89,7 +89,7 @@ def cross_validate(variogram_model, event):
         print("pred = ", pred)
         
         print(f"======= Fold {fold} ========")    
-        me_score = mean(y_val) - mean(pred)
+        me_score = mean(pred) - mean(y_val)
         print(f"ME is {me_score:0.6f} ")
         
         rmse_score = math.sqrt(mean_squared_error(y_val, pred))
@@ -98,16 +98,22 @@ def cross_validate(variogram_model, event):
         ase_score = math.sqrt(mean(var))
         print(f"AMSE is {ase_score:0.6f}")
         
-        inv_var = []
+        inv_sqrt_var = []
         for i in range (len(var)):
-            inv_var.append(1 / float(var[i]))
-        mse_score = me_score * mean(inv_var)
+            inv_sqrt_var.append(1 / float(math.sqrt(var[i])))
+            
+        element = []
+        for i in range (len(var)):
+            element.append(float((pred[i] - y_val[i]) * inv_sqrt_var[i]))
+        
+        mse_score = mean(element)
         print(f"MSE is {mse_score:0.6f}")
         
-        db_inv_var = []
+        element = []
         for i in range (len(var)):
-            db_inv_var.append(float(inv_var[i])**2)
-        rmsse_score = math.sqrt(me_score**2 * mean(db_inv_var))
+            element.append(float(((pred[i] - y_val[i]) * inv_sqrt_var[i]))**2)
+        
+        rmsse_score = math.sqrt(mean(element))
         print(f"RMSSE is {rmsse_score:0.6f}")
         
         me.append(me_score)
@@ -136,8 +142,8 @@ def main():
     #define predictor and response variables
     event = General.execute_2()
     cross_validate('spherical', event)
-    # cross_validate("gaussian", event)
-    # cross_validate("exponential", event)
+    cross_validate("gaussian", event)
+    cross_validate("exponential", event)
     
 if __name__ == "__main__":
     main()
